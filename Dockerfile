@@ -1,13 +1,11 @@
-FROM node:13-alpine
+FROM node:20-alpine
 
-RUN mkdir -p /usr/app
+WORKDIR \app
+COPY  *.tgz .
+RUN tar -xzf *.tgz --strip-components=1 && npm install --production
 
-COPY package*.json /usr/app/
-COPY app/* /usr/app/
+EXPOSE 3000
 
-WORKDIR /usr/app
+CMD ["npm" , "start"]
 
-EXPOSE 8080
 
-RUN npm install
-CMD ["node", "server.js"]

@@ -1,0 +1,66 @@
+name: CI/CD Pipline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ['18' , '20']
+
+    steps:
+      - uses: actions/ckeckout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: install Dependencies
+        run: npm install
+      - name: package the app
+        run: npm pack
+      - name: upload artifact
+        if: matrix.node-version == '20'
+        uses: actions/upload-artifact-node@v4
+        with:
+          name: app-package
+          path: "*.tgz"
+
+dockerize_and_scan:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/ckeckout@v4
+      - name: download packeged app
+        uses: actions/download-artifact-node@v4
+        with:
+          name: app-package
+      - name: build docker image
+        run: docker build -t '${{ secrets.DOCKER_USERNAME }}/simple-nodejs-app:latest'
+      - name: security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ secrets.DOCKER_USERNAME }}/simple-nodejs-app:latest'
+      - name: login to dockerhub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASS }}
+      - name: push to docker hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/simple-nodejs-app:latest
+
+deploy:
+    needs: dockerize_and_scan
+    runs-on: self-hosted
+    envinronment: production
+    steps:
+      - name: deploy to local runner
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/simple-nodejs-app:latest
+          docker stop nodejs-app || true
+          docker rm nodejs-app || true
+          docker run -d --name nodejs-app -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/simple-nodejs-app:latest
+
