@@ -5,7 +5,7 @@ on:
     branches: [main]
   workflow_dispatch: 
 
-jobs:
+job1:
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -28,9 +28,8 @@ jobs:
         with:
           name: app-package
           path: "*.tgz"
-
-dockerize_and_scan:
-    needs: build
+job2:
+    needs: job1
     runs-on: ubuntu-latest
     steps:
       - uses: actions/ckeckout@v4
@@ -52,8 +51,8 @@ dockerize_and_scan:
       - name: push to docker hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/simple-nodejs-app:latest
 
-deploy:
-    needs: dockerize_and_scan
+job3:
+    needs: job2
     runs-on: self-hosted
     envinronment: production
     steps:
