@@ -54,7 +54,7 @@ jobs:
   deploy:
     needs: dockerize_and_scan
     runs-on: self-hosted
-    envinronment: production
+    environment: production
     steps:
       - name: deploy to local runner
         run: |
