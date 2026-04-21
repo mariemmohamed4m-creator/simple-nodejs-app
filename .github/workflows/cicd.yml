@@ -57,7 +57,7 @@ jobs:
     steps:
       - name: deploy to local runner
         run: |
-          docker pull {{ secrets.DOCKER_USERNAME }}/simple-nodejs-app:latest
+          docker pull ${{secrets.DOCKER_USERNAME}}/simple-nodejs-app:latest
           docker stop nodejs-app || true
           docker rm nodejs-app || true
-          docker run -d --name nodejs-app -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/simple-nodejs-app:latest
+          docker run -d --name nodejs-app -p 3000:3000 ${{secrets.DOCKER_USERNAME}}/simple-nodejs-app:latest
